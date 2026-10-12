@@ -27,11 +27,11 @@ describe("schedule", () => {
 });
 
 describe("loanCost", () => {
-  it("deducts the 1% fee and 18% GST at disbursal", () => {
+  it("deducts the 2% fee and 18% GST at disbursal", () => {
     const cost = loanCost(50_000, 24, 6);
-    expect(cost.processingFee).toBe(500);
-    expect(cost.gstOnFee).toBe(90);
-    expect(cost.netDisbursal).toBe(49_410);
+    expect(cost.processingFee).toBe(1_000);
+    expect(cost.gstOnFee).toBe(180);
+    expect(cost.netDisbursal).toBe(48_820);
   });
 
   it("reports the largest EMI, which the mandate must cover", () => {

@@ -5,8 +5,8 @@ export const LOAN_TERMS = {
   minAmount: 15_000,
   maxAmount: 300_000,
   tenuresMonths: [6, 9, 12] as const,
-  annualRatePct: { min: 13.75, max: 21.5 }, // lowest and highest in RATE_BY_BAND
-  processingFeeRate: 0.01,
+  annualRatePct: { min: 9.5, max: 19.25 }, // lowest and highest in RATE_BY_BAND
+  processingFeeRate: 0.02,
   gstRate: 0.18,
   failedEmiCharge: 250,
 } as const;
@@ -57,10 +57,10 @@ export const SITE = {
 export const APR_RANGE = { min: 18, max: 24 } as const;
 export const APR_CEILING_BY_BAND = { A: 18, B: 20, C: 22, D: 24 } as const;
 export const RATE_BY_BAND = {
-  A: { 6: 13.75, 9: 15, 12: 15.5 },
-  B: { 6: 15.75, 9: 17, 12: 17.5 },
-  C: { 6: 17.75, 9: 19, 12: 19.5 },
-  D: { 6: 19.75, 9: 21, 12: 21.5 },
+  A: { 6: 9.5, 9: 12, 12: 13.25 },
+  B: { 6: 11.5, 9: 14, 12: 15.25 },
+  C: { 6: 13.5, 9: 16, 12: 17.25 },
+  D: { 6: 15.5, 9: 18, 12: 19.25 },
 } as const satisfies Record<keyof typeof APR_CEILING_BY_BAND, Record<Tenure, number>>;
 
 export type Tenure = (typeof LOAN_TERMS.tenuresMonths)[number];
