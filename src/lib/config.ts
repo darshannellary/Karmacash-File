@@ -49,3 +49,15 @@ export const SITE = {
     whatsapp: "To be announced",
   },
 } as const;
+
+// Interest rate by scorecard band, within the 18% to 24% range. Applicants without a
+// credit score above 700 (the 5% sleeve) are priced at the top of the range.
+export const RATE_BY_BAND = { A: 18, B: 20, C: 22, D: 24 } as const;
+
+// Until the NBFC signs, every third-party service (OTP, KYC, Account Aggregator, bureau,
+// penny drop, mandate, eSign) runs against sandbox stand-ins and no money moves.
+export const SANDBOX = process.env.KARMACASH_MODE !== "live";
+export const SANDBOX_OTP = "123456";
+
+// RBI Digital Lending Directions: cooling-off period of at least 3 days for loans of 7 days or more.
+export const COOLING_OFF_DAYS = 3;

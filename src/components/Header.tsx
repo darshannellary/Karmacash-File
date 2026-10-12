@@ -25,9 +25,14 @@ export function Header() {
             </Link>
           ))}
         </nav>
-        <ButtonLink href="/eligibility" size="sm">
-          Check eligibility
-        </ButtonLink>
+        <div className="flex items-center gap-3">
+          <Link href="/apply" className="text-sm font-semibold text-action">
+            Sign in
+          </Link>
+          <ButtonLink href="/eligibility" size="sm">
+            Check eligibility
+          </ButtonLink>
+        </div>
       </div>
       <nav aria-label="Main, mobile" className="flex gap-4 overflow-x-auto border-t border-line px-4 py-2 text-sm md:hidden">
         {NAV.map((item) => (

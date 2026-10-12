@@ -1,6 +1,8 @@
 "use client";
 
-import { type FormEvent, type ReactNode, useState } from "react";
+import Link from "next/link";
+import { type FormEvent, useState } from "react";
+import { Field } from "@/components/forms";
 import {
   checkEligibility,
   type EligibilityResult,
@@ -89,23 +91,20 @@ export function EligibilityForm() {
           )}
           <p className={result.status === "likely" ? "mt-2 text-muted" : "font-semibold"}>{result.message}</p>
           {result.status === "likely" && (
-            <p className="mt-4 text-sm text-muted">
-              Applications open soon. The final amount depends on your full application and the lender&apos;s decision.
-            </p>
+            <>
+              <p className="mt-4 text-sm text-muted">
+                The final amount depends on your full application and the lender&apos;s decision.
+              </p>
+              <Link
+                href="/apply"
+                className="mt-4 inline-flex rounded-lg bg-action px-5 py-3 font-semibold text-white hover:bg-action-hover"
+              >
+                Start your application
+              </Link>
+            </>
           )}
         </div>
       )}
-    </div>
-  );
-}
-
-function Field({ label, htmlFor, children }: { label: string; htmlFor: string; children: ReactNode }) {
-  return (
-    <div>
-      <label htmlFor={htmlFor} className="mb-1 block font-semibold">
-        {label}
-      </label>
-      {children}
     </div>
   );
 }
