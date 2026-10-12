@@ -3,8 +3,6 @@
 import { type ReactNode, useActionState } from "react";
 import type { FormState } from "@/lib/form-state";
 
-export const inputClass = "w-full rounded-lg border border-line px-3 py-2";
-
 export function Field({ label, htmlFor, hint, children }: { label: string; htmlFor: string; hint?: string; children: ReactNode }) {
   return (
     <div>

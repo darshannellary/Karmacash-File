@@ -1,7 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
-import { Field, inputClass, StepForm } from "@/components/forms";
+import { Field, StepForm } from "@/components/forms";
+import { inputClass } from "@/components/styles";
 import { OfferForm } from "@/components/OfferForm";
 import {
   type ApplicationState,
