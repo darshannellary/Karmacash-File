@@ -1,4 +1,5 @@
 import { describe, expect, it } from "vitest";
+import { APR_CEILING_BY_BAND, APR_RANGE, LOAN_TERMS, type PricedBand, RATE_BY_BAND } from "./config";
 import { aprPct, emi, loanCost, principalForEmi, schedule } from "./emi";
 
 describe("emi", () => {
@@ -26,11 +27,18 @@ describe("schedule", () => {
 });
 
 describe("loanCost", () => {
-  it("deducts the 4% fee and 18% GST at disbursal", () => {
+  it("deducts the 2% fee and 18% GST at disbursal", () => {
     const cost = loanCost(50_000, 24, 6);
-    expect(cost.processingFee).toBe(2_000);
-    expect(cost.gstOnFee).toBe(360);
-    expect(cost.netDisbursal).toBe(47_640);
+    expect(cost.processingFee).toBe(1_000);
+    expect(cost.gstOnFee).toBe(180);
+    expect(cost.netDisbursal).toBe(48_820);
+  });
+
+  it("reports the largest EMI, which the mandate must cover", () => {
+    const cost = loanCost(130_000, 20, 12);
+    const rows = schedule(130_000, 20, 12);
+    expect(cost.largestEmi).toBe(rows.at(-1)!.emi);
+    expect(cost.largestEmi).toBeGreaterThan(cost.emi);
   });
 
   it("gives an APR above the interest rate once the fee is included", () => {
@@ -43,6 +51,26 @@ describe("loanCost", () => {
     const six = loanCost(50_000, 18, 6).aprPct - 18;
     const twelve = loanCost(50_000, 18, 12).aprPct - 18;
     expect(twelve).toBeLessThan(six);
+  });
+});
+
+describe("pricing", () => {
+  it(`keeps every loan's APR within ${APR_RANGE.max}% and its band's ceiling`, () => {
+    for (const band of Object.keys(RATE_BY_BAND) as PricedBand[]) {
+      for (const months of LOAN_TERMS.tenuresMonths) {
+        for (let amount = LOAN_TERMS.minAmount; amount <= LOAN_TERMS.maxAmount; amount += 1000) {
+          const { aprPct } = loanCost(amount, RATE_BY_BAND[band][months], months);
+          expect(aprPct, `${band} ${months}m Rs ${amount}`).toBeLessThanOrEqual(APR_CEILING_BY_BAND[band]);
+          expect(aprPct).toBeLessThanOrEqual(APR_RANGE.max);
+        }
+      }
+    }
+  });
+
+  it("keeps the advertised interest range in step with the rate table", () => {
+    const rates = Object.values(RATE_BY_BAND).flatMap((byTenure) => Object.values(byTenure));
+    expect(Math.min(...rates)).toBe(LOAN_TERMS.annualRatePct.min);
+    expect(Math.max(...rates)).toBe(LOAN_TERMS.annualRatePct.max);
   });
 });
 

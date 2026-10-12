@@ -1,4 +1,5 @@
-import { CREDIT_POLICY, RATE_BY_BAND } from "./config";
+import { COOLING_OFF_DAYS, CREDIT_POLICY, LOAN_TERMS, type PricedBand, RATE_BY_BAND, type Tenure } from "./config";
+import { principalForEmi } from "./emi";
 import type { WorkType } from "./eligibility";
 import type { Band, Decision, ReasonCode } from "./scorecard";
 
@@ -19,6 +20,7 @@ export type ApplicationState = {
     inSleeve: boolean;
     reasons: ReasonCode[];
     avgMonthlyInflow: number;
+    maxEmi: number;
     policyVersion: string;
     dataSet: string;
     decidedAt: string;
@@ -69,9 +71,42 @@ export const PROGRESS: { label: string; steps: Step[] }[] = [
   { label: "Sign", steps: ["sign", "done"] },
 ];
 
-export function rateFor(band: Band | null, inSleeve: boolean): number {
-  if (inSleeve || band === null || band === "E") return RATE_BY_BAND.D;
-  return RATE_BY_BAND[band];
+export function isTenure(months: number): months is Tenure {
+  return (LOAN_TERMS.tenuresMonths as readonly number[]).includes(months);
+}
+
+export function pricedBand(band: Band | null, inSleeve: boolean): PricedBand {
+  return inSleeve || band === null || band === "E" ? "D" : band;
+}
+
+export function rateFor(band: Band | null, inSleeve: boolean, months: Tenure): number {
+  return RATE_BY_BAND[pricedBand(band, inSleeve)][months];
+}
+
+/**
+ * Largest amount, in steps of Rs 1,000, that fits both the limit and the affordable EMI
+ * at this tenure. The limit is sized for the longest tenure, so shorter ones can be lower.
+ */
+export function maxAmountFor(limit: number, maxEmi: number, ratePct: number, months: Tenure): number {
+  const affordable = Math.floor(principalForEmi(maxEmi, ratePct, months) / 1000) * 1000;
+  return Math.min(limit, affordable);
+}
+
+/** What the borrower can choose at each tenure; a tenure is unavailable if its max is below the minimum loan. */
+export function offerTerms(decision: { band: Band | null; inSleeve: boolean; limit: number; maxEmi: number }) {
+  return LOAN_TERMS.tenuresMonths.map((months) => {
+    const ratePct = rateFor(decision.band, decision.inSleeve, months);
+    const maxAmount = maxAmountFor(decision.limit, decision.maxEmi, ratePct, months);
+    return { months, ratePct, maxAmount, available: maxAmount >= LOAN_TERMS.minAmount };
+  });
+}
+
+export type OfferTerm = ReturnType<typeof offerTerms>[number];
+
+export function coolingOffEnds(signedAt: string): Date {
+  const d = new Date(signedAt);
+  d.setUTCDate(d.getUTCDate() + COOLING_OFF_DAYS);
+  return d;
 }
 
 export function reapplyDate(decidedAt: string): Date {
@@ -80,9 +115,11 @@ export function reapplyDate(decidedAt: string): Date {
   return d;
 }
 
-/** EMI due dates: the same day each month after signing, starting next month. */
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000;
+
+/** EMI due dates: the same day each month after signing (in India time), starting next month. */
 export function dueDates(signedAt: string, months: number): Date[] {
-  const start = new Date(signedAt);
+  const start = new Date(new Date(signedAt).getTime() + IST_OFFSET_MS);
   return Array.from({ length: months }, (_, i) => {
     const d = new Date(Date.UTC(start.getUTCFullYear(), start.getUTCMonth() + i + 1, 1));
     const lastDay = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
