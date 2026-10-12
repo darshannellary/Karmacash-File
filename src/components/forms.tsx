@@ -15,6 +15,23 @@ export function Field({ label, htmlFor, hint, children }: { label: string; htmlF
   );
 }
 
+/** A one-button form styled as a link, for secondary actions such as resending a code. */
+export function InlineAction({ action, label }: { action: () => Promise<FormState>; label: string }) {
+  const [state, formAction, pending] = useActionState(action, undefined);
+  return (
+    <form action={formAction} className="text-sm">
+      <button type="submit" disabled={pending} className="font-semibold text-action underline disabled:opacity-60">
+        {pending ? "Please wait…" : label}
+      </button>
+      {state?.error && (
+        <p role="alert" className="mt-2 text-red-800">
+          {state.error}
+        </p>
+      )}
+    </form>
+  );
+}
+
 /** A step's form: shows the action's error, and disables the button while it runs. */
 export function StepForm({
   action,

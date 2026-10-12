@@ -7,6 +7,7 @@ import { inLaunchRegion, isValidPin, type WorkType } from "@/lib/eligibility";
 import { loanCost } from "@/lib/emi";
 import type { FormState } from "@/lib/form-state";
 import { fetchApplicantData, isDataSetId, namesMatch, pennyDrop, sleeveShareThisMonth, verifyOtp } from "@/lib/sandbox";
+import { allowGuess, allowSend, type OtpScope, recordWrongGuess } from "@/lib/rate-limit";
 import { score } from "@/lib/scorecard";
 import { clearState, readState, writeState } from "@/lib/session";
 import { ageOn, isIndividualPan, isValidAccountNumber, isValidIfsc, last4, normalisePhone } from "@/lib/validation";
@@ -24,20 +25,41 @@ async function stateAt(step: ReturnType<typeof currentStep>): Promise<Applicatio
 
 const OUT_OF_STEP: FormState = { error: "This step has changed. Please reload the page." };
 
+/** Checks an OTP against the guess limits; returns the error to show, or null if it is right. */
+async function checkOtp(scope: OtpScope, phone: string, code: string, codeId?: string): Promise<string | null> {
+  const allowed = await allowGuess(scope, phone, codeId);
+  if (!allowed.ok) return allowed.error;
+  if (verifyOtp(code)) return null;
+  return recordWrongGuess(scope, phone, codeId);
+}
+
 export async function sendOtp(_: FormState, data: FormData): Promise<FormState> {
   // Starting again from here would wipe the application, so only allow it before sign-in.
   const step = currentStep(await readState());
   if (step !== "phone" && step !== "otp") return OUT_OF_STEP;
   const phone = normalisePhone(text(data, "phone"));
   if (!phone) return { error: "Enter a 10-digit Indian mobile number." };
+  const allowed = await allowSend(phone);
+  if (!allowed.ok) return { error: allowed.error };
   await writeState({ phone, otpSentAt: now() });
+  return undefined;
+}
+
+export async function resendOtp(): Promise<FormState> {
+  const s = await stateAt("otp");
+  if (!s?.phone) return OUT_OF_STEP;
+  const allowed = await allowSend(s.phone);
+  if (!allowed.ok) return { error: allowed.error };
+  // A new otpSentAt identifies a new code, so its wrong-guess count starts again.
+  await writeState({ ...s, otpSentAt: now() });
   return undefined;
 }
 
 export async function confirmOtp(_: FormState, data: FormData): Promise<FormState> {
   const s = await stateAt("otp");
-  if (!s) return OUT_OF_STEP;
-  if (!verifyOtp(text(data, "otp"))) return { error: "That code is not right. Check the SMS and try again." };
+  if (!s?.phone) return OUT_OF_STEP;
+  const error = await checkOtp("signin", s.phone, text(data, "otp"), s.otpSentAt);
+  if (error) return { error };
   await writeState({ ...s, signedInAt: now() });
   return undefined;
 }
@@ -68,10 +90,11 @@ export async function saveDetails(_: FormState, data: FormData): Promise<FormSta
 
 export async function verifyKyc(_: FormState, data: FormData): Promise<FormState> {
   const s = await stateAt("kyc");
-  if (!s) return OUT_OF_STEP;
+  if (!s?.phone) return OUT_OF_STEP;
   const aadhaarLast4 = text(data, "aadhaarLast4");
   if (!/^\d{4}$/.test(aadhaarLast4)) return { error: "Enter the last 4 digits of your Aadhaar." };
-  if (!verifyOtp(text(data, "otp"))) return { error: "That Aadhaar OTP is not right." };
+  const error = await checkOtp("kyc", s.phone, text(data, "otp"));
+  if (error) return { error };
   await writeState({ ...s, kyc: { aadhaarLast4, verifiedAt: now() } });
   return undefined;
 }
@@ -161,9 +184,10 @@ export async function registerMandate(_: FormState, data: FormData): Promise<For
 
 export async function signAgreement(_: FormState, data: FormData): Promise<FormState> {
   const s = await stateAt("sign");
-  if (!s) return OUT_OF_STEP;
+  if (!s?.phone) return OUT_OF_STEP;
   if (data.get("agree") !== "on") return { error: "Please confirm you agree to the loan agreement." };
-  if (!verifyOtp(text(data, "otp"))) return { error: "That eSign OTP is not right." };
+  const error = await checkOtp("esign", s.phone, text(data, "otp"));
+  if (error) return { error };
   const id = `KC${Date.now().toString(36).toUpperCase()}`;
   await writeState({ ...s, loan: { id, signedAt: now() } });
   redirect("/account");

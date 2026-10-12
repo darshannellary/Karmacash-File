@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { type ReactNode, Suspense } from "react";
-import { Field, StepForm } from "@/components/forms";
+import { Field, InlineAction, StepForm } from "@/components/forms";
 import { inputClass } from "@/components/styles";
 import { OfferForm } from "@/components/OfferForm";
 import {
@@ -24,6 +24,7 @@ import {
   confirmOtp,
   giveConsentAndDecide,
   registerMandate,
+  resendOtp,
   saveDetails,
   sendOtp,
   signAgreement,
@@ -107,12 +108,15 @@ function StepView({ step, s }: { step: Step; s: ApplicationState }) {
               <input id="otp" name="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required className={inputClass} />
             </Field>
           </StepForm>
-          <form action={changeNumber} className="mt-4 text-sm">
-            <span className="text-muted">Wrong number? </span>
-            <button type="submit" className="font-semibold text-action underline">
-              Change it
-            </button>
-          </form>
+          <div className="mt-4 space-y-2">
+            <InlineAction action={resendOtp} label="Resend code" />
+            <form action={changeNumber} className="text-sm">
+              <span className="text-muted">Wrong number? </span>
+              <button type="submit" className="font-semibold text-action underline">
+                Change it
+              </button>
+            </form>
+          </div>
         </>
       );
 
