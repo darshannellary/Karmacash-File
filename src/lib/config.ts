@@ -71,5 +71,17 @@ export type PricedBand = keyof typeof RATE_BY_BAND;
 export const SANDBOX = process.env.KARMACASH_MODE !== "live";
 export const SANDBOX_OTP = "123456";
 
+// Limits on one-time codes, per mobile number. Counted on the server so clearing cookies
+// does not reset them. The daily wrong-guess count covers sign-in, KYC and eSign together.
+export const OTP_LIMITS = {
+  resendCooldownSeconds: 30,
+  sendsPer10Minutes: 3,
+  sendsPerDay: 10,
+  wrongGuessesPerCode: 5,
+  codeWindowMinutes: 10,
+  wrongGuessesPerDay: 10,
+  lockHours: 24,
+} as const;
+
 // RBI Digital Lending Directions: cooling-off period of at least 3 days for loans of 7 days or more.
 export const COOLING_OFF_DAYS = 3;
