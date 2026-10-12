@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { Suspense } from "react";
 import { exitDuringCoolingOff, signOut, withdrawAaConsent } from "@/app/apply/actions";
-import { dueDates, formatDate } from "@/lib/application";
-import { COOLING_OFF_DAYS, SANDBOX, SITE } from "@/lib/config";
+import { coolingOffEnds as coolingOffEndsOn, dueDates, formatDate } from "@/lib/application";
+import { SANDBOX, SITE } from "@/lib/config";
 import { formatInr, loanCost, schedule } from "@/lib/emi";
 import { readState } from "@/lib/session";
 
@@ -38,8 +38,7 @@ async function LoanView() {
   const cost = loanCost(offer.amount, offer.ratePct, offer.months);
   const rows = schedule(offer.amount, offer.ratePct, offer.months);
   const dates = dueDates(loan.signedAt, offer.months);
-  const coolingOffEnds = new Date(loan.signedAt);
-  coolingOffEnds.setUTCDate(coolingOffEnds.getUTCDate() + COOLING_OFF_DAYS);
+  const coolingOffEnds = coolingOffEndsOn(loan.signedAt);
   const inCoolingOff = new Date() < coolingOffEnds;
 
   return (

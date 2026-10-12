@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { EmiCalculator } from "@/components/EmiCalculator";
 import { PageShell } from "@/components/PageShell";
-import { LOAN_TERMS, SITE } from "@/lib/config";
-import { formatInr, loanCost } from "@/lib/emi";
+import { APR_RANGE, LOAN_TERMS, RATE_BY_BAND, SITE } from "@/lib/config";
+import { formatInr, formatPct, loanCost } from "@/lib/emi";
 
 export const metadata: Metadata = { title: "Rates and charges" };
 
 export default function Rates() {
-  const sample = loanCost(50_000, LOAN_TERMS.annualRatePct.max, 6);
+  const sample = loanCost(50_000, RATE_BY_BAND.D[6], 6);
+  const fee = `${formatPct(LOAN_TERMS.processingFeeRate)} of the loan amount plus ${formatPct(LOAN_TERMS.gstRate)} GST`;
   const kfs: [string, string][] = [
     ["Lender", SITE.lendingPartner],
     ["Loan amount", formatInr(sample.principal)],
     ["Tenure", `${sample.months} monthly EMIs`],
     ["Interest rate", `${sample.annualRatePct}% a year, reducing balance`],
-    ["Processing fee", `${formatInr(sample.processingFee)} (4% of the loan), charged by the lender`],
+    ["Processing fee", `${formatInr(sample.processingFee)} (${formatPct(LOAN_TERMS.processingFeeRate)} of the loan), charged by the lender`],
     ["GST on processing fee", formatInr(sample.gstOnFee)],
     ["Amount paid into your account", formatInr(sample.netDisbursal)],
     ["Monthly EMI", formatInr(sample.emi)],
@@ -32,8 +33,12 @@ export default function Rates() {
     >
       <table className="w-full text-left">
         <tbody className="divide-y divide-line">
-          <Row label="Interest rate" value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}% a year`} />
-          <Row label="Processing fee" value="4% of the loan amount plus 18% GST, deducted at disbursal" />
+          <Row label="APR (all-in yearly cost)" value={`${APR_RANGE.min}% to ${APR_RANGE.max}%, including the processing fee`} />
+          <Row
+            label="Interest rate"
+            value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}% a year, depending on your profile and tenure`}
+          />
+          <Row label="Processing fee" value={`${fee}, deducted at disbursal`} />
           <Row label="Loan amount" value="Rs 15,000 to Rs 3,00,000" />
           <Row label="Repayment" value="Equal monthly EMIs over 6, 9 or 12 months, auto-debited" />
           <Row label="Failed EMI auto-debit" value={`${formatInr(LOAN_TERMS.failedEmiCharge)} flat`} />

@@ -45,6 +45,8 @@ export type LoanCost = {
   months: number;
   annualRatePct: number;
   emi: number;
+  /** The last EMI absorbs rounding and can exceed the first; mandates must cover it. */
+  largestEmi: number;
   totalInterest: number;
   processingFee: number;
   gstOnFee: number;
@@ -69,6 +71,7 @@ export function loanCost(principal: number, annualRatePct: number, months: numbe
     months,
     annualRatePct,
     emi: rows[0].emi,
+    largestEmi: Math.max(...rows.map((row) => row.emi)),
     totalInterest: totalRepayable - principal,
     processingFee,
     gstOnFee,
@@ -90,6 +93,11 @@ export function aprPct(amountReceived: number, payments: number[]): number {
     else hi = mid;
   }
   return Math.round(((lo + hi) / 2) * 12 * 100 * 100) / 100;
+}
+
+/** A rate such as 0.01 as "1%". */
+export function formatPct(rate: number): string {
+  return `${Math.round(rate * 10_000) / 100}%`;
 }
 
 export function formatInr(amount: number): string {

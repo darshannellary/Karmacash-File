@@ -79,6 +79,7 @@ export type ScoreResult = {
   limit: number;
   inSleeve: boolean;
   avgMonthlyInflow: number;
+  maxEmi: number;
   reasons: ReasonCode[];
 };
 
@@ -163,10 +164,15 @@ export function band(total: number): Band {
   return total >= A ? "A" : total >= B ? "B" : total >= C ? "C" : total >= D ? "D" : "E";
 }
 
+/** Largest new EMI the applicant can take on, in whole rupees. */
+export function maxEmiFor(a: Applicant): number {
+  return Math.max(0, Math.floor(CREDIT_POLICY.maxEmiToInflow * averageInflow(a) - a.existingMonthlyEmi));
+}
+
 /** Highest amount the applicant can borrow, rounded down to the nearest Rs 1,000. */
 export function limitFor(a: Applicant, inSleeve: boolean): number {
   const inflow = averageInflow(a);
-  const maxEmi = CREDIT_POLICY.maxEmiToInflow * inflow - a.existingMonthlyEmi;
+  const maxEmi = maxEmiFor(a);
   const longest = Math.max(...LOAN_TERMS.tenuresMonths);
   const affordable = principalForEmi(maxEmi, LOAN_TERMS.annualRatePct.max, longest);
   const firstLoan = a.onTimeKarmacashLoansRepaid === 0;
@@ -183,6 +189,7 @@ export function score(a: Applicant, ctx: PolicyContext): ScoreResult {
   const base = {
     policyVersion: CREDIT_POLICY.version,
     avgMonthlyInflow: Math.round(averageInflow(a)),
+    maxEmi: maxEmiFor(a),
   };
 
   const ko = knockouts(a);

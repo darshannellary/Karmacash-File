@@ -8,8 +8,8 @@ import {
   type ApplicationState,
   currentStep,
   formatDate,
+  offerTerms,
   PROGRESS,
-  rateFor,
   reapplyDate,
   type Step,
 } from "@/lib/application";
@@ -215,13 +215,21 @@ function StepView({ step, s }: { step: Step; s: ApplicationState }) {
 
     case "offer": {
       const d = s.decision!;
+      if (d.maxEmi === undefined) {
+        return (
+          <>
+            <Heading title="Please start again" intro="Your application was decided before an update to how we check what you can afford." />
+            <StartOver label="Start a new application" />
+          </>
+        );
+      }
       return (
         <>
           <Heading
             title={`You can borrow up to ${formatInr(d.limit)}`}
             intro={`Based on average monthly income of ${formatInr(d.avgMonthlyInflow)} into your account. Choose what you need.`}
           />
-          <OfferForm limit={d.limit} ratePct={rateFor(d.band, d.inSleeve)} action={acceptOffer} />
+          <OfferForm limit={d.limit} terms={offerTerms(d)} action={acceptOffer} />
         </>
       );
     }

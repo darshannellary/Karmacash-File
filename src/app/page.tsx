@@ -1,5 +1,6 @@
 import { ButtonLink } from "@/components/ButtonLink";
-import { LOAN_TERMS } from "@/lib/config";
+import { APR_RANGE, LOAN_TERMS } from "@/lib/config";
+import { formatPct } from "@/lib/emi";
 
 const STEPS = [
   {
@@ -54,8 +55,8 @@ export default function Home() {
       </section>
 
       <section className="mx-auto grid max-w-5xl gap-6 px-4 sm:grid-cols-3">
-        <Fact value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}%`} label="interest a year" />
-        <Fact value="4% + GST" label="one-time processing fee" />
+        <Fact value={`${APR_RANGE.min}% to ${APR_RANGE.max}%`} label="APR, fees included" />
+        <Fact value={`${formatPct(LOAN_TERMS.processingFeeRate)} + GST`} label="one-time processing fee" />
         <Fact value="No hidden charges" label="every rupee shown before you sign" />
       </section>
     </>

@@ -1,7 +1,7 @@
 "use server";
 
 import { redirect } from "next/navigation";
-import { type ApplicationState, currentStep, rateFor } from "@/lib/application";
+import { type ApplicationState, coolingOffEnds, currentStep, isTenure, offerTerms } from "@/lib/application";
 import { LOAN_TERMS, SANDBOX } from "@/lib/config";
 import { inLaunchRegion, isValidPin, type WorkType } from "@/lib/eligibility";
 import { loanCost } from "@/lib/emi";
@@ -25,6 +25,9 @@ async function stateAt(step: ReturnType<typeof currentStep>): Promise<Applicatio
 const OUT_OF_STEP: FormState = { error: "This step has changed. Please reload the page." };
 
 export async function sendOtp(_: FormState, data: FormData): Promise<FormState> {
+  // Starting again from here would wipe the application, so only allow it before sign-in.
+  const step = currentStep(await readState());
+  if (step !== "phone" && step !== "otp") return OUT_OF_STEP;
   const phone = normalisePhone(text(data, "phone"));
   if (!phone) return { error: "Enter a 10-digit Indian mobile number." };
   await writeState({ phone, otpSentAt: now() });
@@ -94,6 +97,7 @@ export async function giveConsentAndDecide(_: FormState, data: FormData): Promis
       inSleeve: result.inSleeve,
       reasons: result.reasons,
       avgMonthlyInflow: result.avgMonthlyInflow,
+      maxEmi: result.maxEmi,
       policyVersion: result.policyVersion,
       dataSet,
       decidedAt: at,
@@ -114,13 +118,16 @@ export async function acceptOffer(_: FormState, data: FormData): Promise<FormSta
   if (!s?.decision) return OUT_OF_STEP;
   const amount = Number(text(data, "amount"));
   const months = Number(text(data, "months"));
-  if (!Number.isInteger(amount) || amount < LOAN_TERMS.minAmount || amount > s.decision.limit || amount % 1000 !== 0) {
+  if (!isTenure(months)) return { error: "Choose 6, 9 or 12 months." };
+  // Applications decided before maxEmi was recorded cannot be checked for affordability.
+  if (s.decision.maxEmi === undefined) return { error: "Please start a new application." };
+  const term = offerTerms(s.decision).find((t) => t.months === months)!;
+  if (!term.available) return { error: `The EMI over ${months} months is more than you can afford. Choose a longer tenure.` };
+  if (!Number.isInteger(amount) || amount < LOAN_TERMS.minAmount || amount > term.maxAmount || amount % 1000 !== 0) {
     return { error: "Choose an amount within your limit." };
   }
-  if (!(LOAN_TERMS.tenuresMonths as readonly number[]).includes(months)) return { error: "Choose 6, 9 or 12 months." };
   if (data.get("kfs") !== "on") return { error: "Please confirm you have read the Key Fact Statement." };
-  const ratePct = rateFor(s.decision.band, s.decision.inSleeve);
-  await writeState({ ...s, offer: { amount, months, ratePct, acceptedAt: now() } });
+  await writeState({ ...s, offer: { amount, months, ratePct: term.ratePct, acceptedAt: now() } });
   return undefined;
 }
 
@@ -146,8 +153,9 @@ export async function registerMandate(_: FormState, data: FormData): Promise<For
   if (!s?.offer) return OUT_OF_STEP;
   const method = text(data, "method");
   if (method !== "enach" && method !== "upi") return { error: "Choose e-NACH or UPI AutoPay." };
-  const { emi } = loanCost(s.offer.amount, s.offer.ratePct, s.offer.months);
-  await writeState({ ...s, mandate: { method, maxAmount: emi, registeredAt: now() } });
+  // The last EMI absorbs rounding and can be a few rupees more than the others.
+  const { largestEmi } = loanCost(s.offer.amount, s.offer.ratePct, s.offer.months);
+  await writeState({ ...s, mandate: { method, maxAmount: largestEmi, registeredAt: now() } });
   return undefined;
 }
 
@@ -164,7 +172,7 @@ export async function signAgreement(_: FormState, data: FormData): Promise<FormS
 /** Cooling-off exit: in the sandbox this just closes the test loan. */
 export async function exitDuringCoolingOff(): Promise<void> {
   const s = await readState();
-  if (!s.loan) return;
+  if (!s.loan || new Date() >= coolingOffEnds(s.loan.signedAt)) return;
   await writeState({ phone: s.phone, otpSentAt: s.otpSentAt, signedInAt: s.signedInAt });
   redirect("/apply");
 }

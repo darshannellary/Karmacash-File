@@ -70,6 +70,11 @@ describe("main book (score above 700)", () => {
     expect(limit).toBeLessThan(30_000);
   });
 
+  it("reports the new EMI the applicant can afford, net of existing EMIs", () => {
+    const r = score({ ...trader, existingMonthlyEmi: 5_000 }, open);
+    expect(r.maxEmi).toBe(Math.floor(0.35 * averageInflow(trader) - 5_000));
+  });
+
   it("declines when the affordable amount is below Rs 15,000", () => {
     const r = score({ ...trader, existingMonthlyEmi: 14_000 }, open);
     expect(r.decision).toBe("decline");
