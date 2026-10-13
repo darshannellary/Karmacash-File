@@ -47,7 +47,10 @@ export function counterStore(): CounterStore {
   return globalForStore.karmacashCounters;
 }
 
-export type OtpScope = "signin" | "kyc" | "esign";
+export type OtpScope = "signin" | "email" | "kyc" | "esign";
+
+// Sign-in and email codes are ours and can be re-sent; KYC and eSign codes come from providers.
+const resendable = (scope: OtpScope) => scope === "signin" || scope === "email";
 export type Verdict = { ok: true } | { ok: false; error: string };
 
 const SECOND = 1000;
@@ -114,7 +117,7 @@ export async function allowGuess(
     return {
       ok: false,
       error:
-        scope === "signin"
+        resendable(scope)
           ? "Too many wrong tries for this code. Send a new code."
           : `Too many wrong tries. Try again in ${waitText(wrong.expiresAt - Date.now())}.`,
     };
@@ -137,7 +140,7 @@ export async function recordWrongGuess(
   }
   const left = Math.min(OTP_LIMITS.wrongGuessesPerCode - code.count, OTP_LIMITS.wrongGuessesPerDay - day.count);
   if (left <= 0) {
-    return scope === "signin"
+    return resendable(scope)
       ? "That code is not right, and it can't be used again. Send a new code."
       : `That code is not right. Try again in ${waitText(code.expiresAt - Date.now())}.`;
   }

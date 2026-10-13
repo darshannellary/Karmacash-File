@@ -17,6 +17,11 @@ function sign(payload: string): string {
   return createHmac("sha256", secret()).update(payload).digest("base64url");
 }
 
+/** Keyed hash for one-time codes kept in the cookie, so the code itself never leaves the server. */
+export function hashCode(code: string, salt: string): string {
+  return sign(`code:${salt}:${code}`);
+}
+
 export function encodeState(state: ApplicationState): string {
   const payload = Buffer.from(JSON.stringify(state)).toString("base64url");
   return `${payload}.${sign(payload)}`;

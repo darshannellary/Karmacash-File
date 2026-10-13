@@ -11,6 +11,8 @@ export type ApplicationState = {
   signedInAt?: string;
   details?: { fullName: string; dob: string; age: number; panMasked: string; pinCode: string; workType: WorkType };
   waitlisted?: boolean;
+  // The code is kept only as a keyed hash; codeSentAt identifies which code it is.
+  email?: { address: string; codeHash: string; codeSentAt: string; verifiedAt?: string };
   kyc?: { aadhaarLast4: string; verifiedAt: string };
   consent?: { bureauAt: string; aaAt: string; aaRevokedAt?: string; wordingVersion: string };
   decision?: {
@@ -36,6 +38,8 @@ export type Step =
   | "otp"
   | "details"
   | "waitlist"
+  | "email"
+  | "emailCode"
   | "kyc"
   | "consent"
   | "outcome"
@@ -50,6 +54,8 @@ export function currentStep(s: ApplicationState): Step {
   if (!s.signedInAt) return "otp";
   if (!s.details) return "details";
   if (s.waitlisted) return "waitlist";
+  if (!s.email) return "email";
+  if (!s.email.verifiedAt) return "emailCode";
   if (!s.kyc) return "kyc";
   if (!s.consent || !s.decision) return "consent";
   if (s.decision.decision !== "offer") return "outcome";
@@ -63,7 +69,7 @@ export function currentStep(s: ApplicationState): Step {
 /** Progress shown to the borrower; several internal steps share one label. */
 export const PROGRESS: { label: string; steps: Step[] }[] = [
   { label: "Sign in", steps: ["phone", "otp"] },
-  { label: "Your details", steps: ["details", "waitlist"] },
+  { label: "Your details", steps: ["details", "waitlist", "email", "emailCode"] },
   { label: "Identity", steps: ["kyc"] },
   { label: "Bank data", steps: ["consent", "outcome"] },
   { label: "Offer", steps: ["offer"] },

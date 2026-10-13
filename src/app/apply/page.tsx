@@ -15,17 +15,22 @@ import {
 } from "@/lib/application";
 import { LAUNCH_REGION, SANDBOX, SANDBOX_OTP, SITE } from "@/lib/config";
 import { formatInr, loanCost } from "@/lib/emi";
+import { emailConfigured } from "@/lib/email";
 import { DATA_SETS } from "@/lib/sandbox";
 import { REASON_TEXT } from "@/lib/scorecard";
 import { readState } from "@/lib/session";
 import {
   acceptOffer,
+  changeEmail,
   changeNumber,
+  confirmEmailCode,
   confirmOtp,
   giveConsentAndDecide,
   registerMandate,
   resendOtp,
+  resendEmailCode,
   saveDetails,
+  sendEmailCode,
   sendOtp,
   signAgreement,
   simulateReviewerApproval,
@@ -41,7 +46,7 @@ export default function Apply() {
     <div className="mx-auto max-w-xl px-4 py-10">
       {SANDBOX && (
         <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          <strong>Test mode.</strong> No real checks run and no money moves. Use {SANDBOX_OTP} for every OTP.
+          <strong>Test mode.</strong> No real checks run and no money moves. Use {SANDBOX_OTP} for every phone, Aadhaar and eSign OTP.
         </p>
       )}
       <Suspense fallback={<p className="text-muted">Loading your application…</p>}>
@@ -156,6 +161,45 @@ function StepView({ step, s }: { step: Step; s: ApplicationState }) {
             intro={`Karmacash is starting in ${LAUNCH_REGION}. We'll send an SMS to +91 ${s.phone} when we reach PIN code ${s.details?.pinCode}.`}
           />
           <StartOver label="Use a different PIN code" />
+        </>
+      );
+
+    case "email":
+      return (
+        <>
+          <Heading title="Your email address" intro="We'll email your decision, your Key Fact Statement and your loan documents here." />
+          <StepForm action={sendEmailCode} submitLabel="Send code">
+            <Field label="Email" htmlFor="email">
+              <input id="email" name="email" type="email" autoComplete="email" inputMode="email" required placeholder="name@gmail.com" className={inputClass} />
+            </Field>
+          </StepForm>
+        </>
+      );
+
+    case "emailCode":
+      return (
+        <>
+          <Heading
+            title="Check your email"
+            intro={
+              emailConfigured()
+                ? `We sent a 6-digit code to ${s.email?.address}. It may take a minute, and can land in spam.`
+                : `Test mode: no email was sent to ${s.email?.address}. Use ${SANDBOX_OTP}.`
+            }
+          />
+          <StepForm action={confirmEmailCode} submitLabel="Verify email">
+            <Field label="Email code" htmlFor="code">
+              <input id="code" name="code" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required className={inputClass} />
+            </Field>
+          </StepForm>
+          <div className="mt-4 flex flex-wrap gap-x-6 gap-y-2 text-sm">
+            <InlineAction action={resendEmailCode} label="Send a new code" />
+            <form action={changeEmail}>
+              <button type="submit" className="font-semibold text-action underline">
+                Use a different email
+              </button>
+            </form>
+          </div>
         </>
       );
 
