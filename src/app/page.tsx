@@ -28,7 +28,7 @@ export default function Home() {
             Small loans for traders and gig workers, judged on how you actually earn.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted">
-            Borrow Rs 15,000 to Rs 3,00,000 and repay in equal monthly EMIs over 6, 9 or 12{" "}
+            Borrow Rs 15,000 to Rs 3,00,000 and repay in equal monthly EMIs over 6 to 60{" "}
             months. Your UPI and bank payments count, not just your credit score.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">

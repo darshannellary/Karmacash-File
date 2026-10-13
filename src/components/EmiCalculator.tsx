@@ -27,10 +27,10 @@ export function EmiCalculator() {
         onChange={(e) => setAmount(Number(e.target.value))}
         className="mt-2 w-full accent-[var(--action)]"
       />
-      <div className="mt-6 grid gap-4 sm:grid-cols-2">
+      <div className="mt-6 grid gap-4">
         <fieldset>
           <legend className="font-semibold">Repay over</legend>
-          <div className="mt-2 flex gap-2">
+          <div className="mt-2 flex flex-wrap gap-2">
             {LOAN_TERMS.tenuresMonths.map((m) => (
               <button
                 key={m}

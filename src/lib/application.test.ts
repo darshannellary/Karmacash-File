@@ -55,7 +55,7 @@ describe("pricing and dates", () => {
 describe("offerTerms", () => {
   it("offers the full limit at every tenure when the EMI is affordable", () => {
     const terms = offerTerms({ band: "A", inSleeve: false, limit: 50_000, maxEmi: 20_000 });
-    expect(terms.map((t) => t.maxAmount)).toEqual([50_000, 50_000, 50_000]);
+    expect(terms.every((t) => t.maxAmount === 50_000)).toBe(true);
   });
 
   it("caps shorter tenures so the EMI stays within what the borrower can afford", () => {

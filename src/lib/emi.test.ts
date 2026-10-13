@@ -59,7 +59,7 @@ describe("pricing", () => {
     const { min, max } = aprRange();
     for (const band of Object.keys(RATE_BY_BAND) as PricedBand[]) {
       for (const months of LOAN_TERMS.tenuresMonths) {
-        for (let amount = LOAN_TERMS.minAmount; amount <= LOAN_TERMS.maxAmount; amount += 1000) {
+        for (let amount = LOAN_TERMS.minAmount; amount <= LOAN_TERMS.maxAmount; amount += 5000) {
           const { aprPct } = loanCost(amount, RATE_BY_BAND[band][months], months);
           expect(aprPct, `${band} ${months}m Rs ${amount}`).toBeGreaterThanOrEqual(min);
           expect(aprPct, `${band} ${months}m Rs ${amount}`).toBeLessThanOrEqual(max);

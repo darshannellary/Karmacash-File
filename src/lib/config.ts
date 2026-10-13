@@ -4,7 +4,7 @@
 export const LOAN_TERMS = {
   minAmount: 15_000,
   maxAmount: 300_000,
-  tenuresMonths: [6, 9, 12] as const,
+  tenuresMonths: [6, 9, 12, 18, 24, 36, 48, 60] as const,
   annualRatePct: { min: 12, max: 28 }, // lowest and highest in RATE_BY_BAND
   processingFeeRate: 0.05, // "up to 5%": the site prices every loan at this maximum
   gstRate: 0.18,
@@ -54,11 +54,13 @@ export const SITE = {
 // includes the processing fee (see aprRange in emi.ts). Rates are indicative until the NBFC
 // partner confirms them. Applicants without a credit score above 700 (the 5% sleeve) are
 // priced as band D.
+const everyTenure = (ratePct: number) =>
+  Object.fromEntries(LOAN_TERMS.tenuresMonths.map((months) => [months, ratePct])) as Record<Tenure, number>;
 export const RATE_BY_BAND = {
-  A: { 6: 12, 9: 12, 12: 12 },
-  B: { 6: 17, 9: 17, 12: 17 },
-  C: { 6: 23, 9: 23, 12: 23 },
-  D: { 6: 28, 9: 28, 12: 28 },
+  A: everyTenure(12),
+  B: everyTenure(17),
+  C: everyTenure(23),
+  D: everyTenure(28),
 } as const satisfies Record<"A" | "B" | "C" | "D", Record<Tenure, number>>;
 
 export type Tenure = (typeof LOAN_TERMS.tenuresMonths)[number];

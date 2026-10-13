@@ -44,7 +44,7 @@ export default function Rates() {
           />
           <Row label="Processing fee" value={`${fee}, deducted at disbursal`} />
           <Row label="Loan amount" value="Rs 15,000 to Rs 3,00,000" />
-          <Row label="Repayment" value="Equal monthly EMIs over 6, 9 or 12 months, auto-debited" />
+          <Row label="Repayment" value="Equal monthly EMIs over 6 to 60 months (6, 9, 12, 18, 24, 36, 48 or 60), auto-debited" />
           <Row label="Failed EMI auto-debit" value={`${formatInr(LOAN_TERMS.failedEmiCharge)} flat`} />
           <Row label="Prepayment" value="Allowed" />
         </tbody>
