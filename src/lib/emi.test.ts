@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LOAN_TERMS, type PricedBand, RATE_BY_BAND } from "./config";
+import { ADVERTISED_APR, LOAN_TERMS, type PricedBand, RATE_BY_BAND } from "./config";
 import { aprPct, aprRange, emi, loanCost, principalForEmi, schedule } from "./emi";
 
 describe("emi", () => {
@@ -66,6 +66,12 @@ describe("pricing", () => {
         }
       }
     }
+  });
+
+  it("keeps the advertised APR inside the real range, so its caveats stay true", () => {
+    const { min, max } = aprRange();
+    expect(ADVERTISED_APR.min).toBeGreaterThanOrEqual(min);
+    expect(ADVERTISED_APR.max).toBeLessThanOrEqual(max);
   });
 
   it("prices interest from 12% to 28% a year", () => {

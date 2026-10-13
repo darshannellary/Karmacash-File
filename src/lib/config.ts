@@ -63,6 +63,11 @@ export const RATE_BY_BAND = {
   D: everyTenure(28),
 } as const satisfies Record<"A" | "B" | "C" | "D", Record<Tenure, number>>;
 
+// The effective APR advertised for most loans. Actual APRs run wider (see aprRange in emi.ts):
+// short or small loans in high bands go above it, long loans in band A fall below it, and the
+// copy says so wherever this range appears.
+export const ADVERTISED_APR = { min: 17, max: 48 } as const;
+
 export type Tenure = (typeof LOAN_TERMS.tenuresMonths)[number];
 export type PricedBand = keyof typeof RATE_BY_BAND;
 

@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { EmiCalculator } from "@/components/EmiCalculator";
 import { PageShell } from "@/components/PageShell";
-import { LOAN_TERMS, RATE_BY_BAND, SITE } from "@/lib/config";
+import { ADVERTISED_APR, LOAN_TERMS, RATE_BY_BAND, SITE } from "@/lib/config";
 import { aprRange, formatInr, formatPct, loanCost } from "@/lib/emi";
 
 export const metadata: Metadata = { title: "Rates and charges" };
@@ -40,7 +40,7 @@ export default function Rates() {
           />
           <Row
             label="APR (all-in yearly cost)"
-            value={`About ${apr.min}% to ${apr.max}%, including the processing fee. Shorter tenures have a higher APR because the fee is spread over fewer months.`}
+            value={`${ADVERTISED_APR.min}% to ${ADVERTISED_APR.max}% a year for most loans, including the processing fee. Small or short-term loans cost more, up to about ${apr.max}% for a 6-month loan at the highest rate; 3 to 5 year loans at the lowest rate can be as low as about ${apr.min}%.`}
           />
           <Row label="Processing fee" value={`${fee}, deducted at disbursal`} />
           <Row label="Loan amount" value="Rs 15,000 to Rs 3,00,000" />
