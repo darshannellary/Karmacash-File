@@ -5,7 +5,7 @@ export const LOAN_TERMS = {
   minAmount: 15_000,
   maxAmount: 300_000,
   tenuresMonths: [6, 9, 12] as const,
-  annualRatePct: { min: 9.5, max: 19.25 }, // lowest and highest in RATE_BY_BAND
+  annualRatePct: { min: 12, max: 24 }, // lowest and highest in RATE_BY_BAND
   processingFeeRate: 0.02,
   gstRate: 0.18,
   failedEmiCharge: 250,
@@ -50,18 +50,16 @@ export const SITE = {
   },
 } as const;
 
-// The all-in APR, fee included, stays within 18% to 24%. Each band has an APR ceiling, and
-// its interest rate per tenure is the highest (in 0.25% steps) that keeps the APR under that
-// ceiling for every loan amount; shorter tenures are lower because the fee weighs more.
-// Applicants without a credit score above 700 (the 5% sleeve) are priced as band D.
-export const APR_RANGE = { min: 18, max: 24 } as const;
-export const APR_CEILING_BY_BAND = { A: 18, B: 20, C: 22, D: 24 } as const;
+// Interest runs from 12% to 24% a year, set by band; the all-in APR is higher because it
+// includes the processing fee (see aprRange in emi.ts). Rates are indicative until the NBFC
+// partner confirms them. Applicants without a credit score above 700 (the 5% sleeve) are
+// priced as band D.
 export const RATE_BY_BAND = {
-  A: { 6: 9.5, 9: 12, 12: 13.25 },
-  B: { 6: 11.5, 9: 14, 12: 15.25 },
-  C: { 6: 13.5, 9: 16, 12: 17.25 },
-  D: { 6: 15.5, 9: 18, 12: 19.25 },
-} as const satisfies Record<keyof typeof APR_CEILING_BY_BAND, Record<Tenure, number>>;
+  A: { 6: 12, 9: 12, 12: 12 },
+  B: { 6: 16, 9: 16, 12: 16 },
+  C: { 6: 20, 9: 20, 12: 20 },
+  D: { 6: 24, 9: 24, 12: 24 },
+} as const satisfies Record<"A" | "B" | "C" | "D", Record<Tenure, number>>;
 
 export type Tenure = (typeof LOAN_TERMS.tenuresMonths)[number];
 export type PricedBand = keyof typeof RATE_BY_BAND;

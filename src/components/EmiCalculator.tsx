@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { APR_CEILING_BY_BAND, LOAN_TERMS, type PricedBand, RATE_BY_BAND, type Tenure } from "@/lib/config";
+import { LOAN_TERMS, type PricedBand, RATE_BY_BAND, type Tenure } from "@/lib/config";
 import { formatInr, formatPct, loanCost } from "@/lib/emi";
 
 const BANDS = Object.keys(RATE_BY_BAND) as PricedBand[];
@@ -56,7 +56,7 @@ export function EmiCalculator() {
           >
             {BANDS.map((b) => (
               <option key={b} value={b}>
-                {RATE_BY_BAND[b][months]}% a year (APR up to {APR_CEILING_BY_BAND[b]}%)
+                {RATE_BY_BAND[b][months]}% a year
               </option>
             ))}
           </select>
@@ -72,7 +72,7 @@ export function EmiCalculator() {
         <Stat term="Total you repay" value={formatInr(cost.totalRepayable)} />
       </dl>
       <p className="mt-3 text-xs text-muted">
-        Illustration only. Your actual rate depends on your application and is confirmed in your Key Fact Statement.
+        Illustration only. Rates are indicative until our lending partner confirms them. Your actual rate depends on your application and is confirmed in your Key Fact Statement.
       </p>
     </div>
   );

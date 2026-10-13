@@ -1,12 +1,13 @@
 import type { Metadata } from "next";
 import { EmiCalculator } from "@/components/EmiCalculator";
 import { PageShell } from "@/components/PageShell";
-import { APR_RANGE, LOAN_TERMS, RATE_BY_BAND, SITE } from "@/lib/config";
-import { formatInr, formatPct, loanCost } from "@/lib/emi";
+import { LOAN_TERMS, RATE_BY_BAND, SITE } from "@/lib/config";
+import { aprRange, formatInr, formatPct, loanCost } from "@/lib/emi";
 
 export const metadata: Metadata = { title: "Rates and charges" };
 
 export default function Rates() {
+  const apr = aprRange();
   const sample = loanCost(50_000, RATE_BY_BAND.D[6], 6);
   const fee = `${formatPct(LOAN_TERMS.processingFeeRate)} of the loan amount plus ${formatPct(LOAN_TERMS.gstRate)} GST`;
   const kfs: [string, string][] = [
@@ -29,14 +30,17 @@ export default function Rates() {
   return (
     <PageShell
       title="Rates and charges"
-      intro="Every rupee you pay is shown here and in your Key Fact Statement before you sign. Karmacash itself never charges you anything."
+      intro="Every rupee you pay is shown here and in your Key Fact Statement before you sign. Karmacash itself never charges you anything. Rates are indicative until our lending partner confirms them."
     >
       <table className="w-full text-left">
         <tbody className="divide-y divide-line">
-          <Row label="APR (all-in yearly cost)" value={`${APR_RANGE.min}% to ${APR_RANGE.max}%, including the processing fee`} />
           <Row
             label="Interest rate"
-            value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}% a year, depending on your profile and tenure`}
+            value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}% a year, reducing balance, depending on your profile`}
+          />
+          <Row
+            label="APR (all-in yearly cost)"
+            value={`About ${apr.min}% to ${apr.max}%, including the processing fee. Shorter tenures have a higher APR because the fee is spread over fewer months.`}
           />
           <Row label="Processing fee" value={`${fee}, deducted at disbursal`} />
           <Row label="Loan amount" value="Rs 15,000 to Rs 3,00,000" />
