@@ -32,8 +32,8 @@ describe("currentStep", () => {
 describe("pricing and dates", () => {
   it("prices by band and puts the sleeve at the top rate", () => {
     expect(rateFor("A", false, 12)).toBe(12);
-    expect(rateFor("C", false, 6)).toBe(20);
-    expect(rateFor("A", true, 12)).toBe(24);
+    expect(rateFor("C", false, 6)).toBe(23);
+    expect(rateFor("A", true, 12)).toBe(28);
   });
 
   it("keeps due dates inside short months", () => {

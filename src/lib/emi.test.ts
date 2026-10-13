@@ -68,8 +68,8 @@ describe("pricing", () => {
     }
   });
 
-  it("prices interest from 12% to 24% a year", () => {
-    expect(LOAN_TERMS.annualRatePct).toEqual({ min: 12, max: 24 });
+  it("prices interest from 12% to 28% a year", () => {
+    expect(LOAN_TERMS.annualRatePct).toEqual({ min: 12, max: 28 });
   });
 
   it("keeps the advertised interest range in step with the rate table", () => {
