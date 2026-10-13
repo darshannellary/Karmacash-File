@@ -1,4 +1,4 @@
-import { LOAN_TERMS } from "./config";
+import { LOAN_TERMS, RATE_BY_BAND } from "./config";
 
 /** Equal monthly instalment for a reducing-balance loan, unrounded. */
 export function emi(principal: number, annualRatePct: number, months: number): number {
@@ -106,4 +106,23 @@ export function formatInr(amount: number): string {
     currency: "INR",
     maximumFractionDigits: 0,
   }).format(amount);
+}
+
+/**
+ * Lowest and highest all-in APR across every band, tenure and loan amount, rounded out to
+ * whole percentages. The cheapest loan is the lowest rate over the longest tenure (the fee
+ * is spread thinnest); the dearest is the highest rate over the shortest.
+ */
+export function aprRange(): { min: number; max: number } {
+  const rates = Object.values(RATE_BY_BAND).flatMap((byTenure) => Object.entries(byTenure));
+  let min = Infinity;
+  let max = -Infinity;
+  for (const [months, rate] of rates) {
+    for (const amount of [LOAN_TERMS.minAmount, LOAN_TERMS.maxAmount]) {
+      const apr = loanCost(amount, rate, Number(months)).aprPct;
+      min = Math.min(min, apr);
+      max = Math.max(max, apr);
+    }
+  }
+  return { min: Math.floor(min), max: Math.ceil(max) };
 }

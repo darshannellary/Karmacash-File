@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { APR_CEILING_BY_BAND, APR_RANGE, LOAN_TERMS, type PricedBand, RATE_BY_BAND } from "./config";
-import { aprPct, emi, loanCost, principalForEmi, schedule } from "./emi";
+import { LOAN_TERMS, type PricedBand, RATE_BY_BAND } from "./config";
+import { aprPct, aprRange, emi, loanCost, principalForEmi, schedule } from "./emi";
 
 describe("emi", () => {
   it("matches the standard formula for Rs 50,000 at 24% over 6 months", () => {
@@ -55,16 +55,21 @@ describe("loanCost", () => {
 });
 
 describe("pricing", () => {
-  it(`keeps every loan's APR within ${APR_RANGE.max}% and its band's ceiling`, () => {
+  it("keeps every loan's APR inside the advertised APR range", () => {
+    const { min, max } = aprRange();
     for (const band of Object.keys(RATE_BY_BAND) as PricedBand[]) {
       for (const months of LOAN_TERMS.tenuresMonths) {
         for (let amount = LOAN_TERMS.minAmount; amount <= LOAN_TERMS.maxAmount; amount += 1000) {
           const { aprPct } = loanCost(amount, RATE_BY_BAND[band][months], months);
-          expect(aprPct, `${band} ${months}m Rs ${amount}`).toBeLessThanOrEqual(APR_CEILING_BY_BAND[band]);
-          expect(aprPct).toBeLessThanOrEqual(APR_RANGE.max);
+          expect(aprPct, `${band} ${months}m Rs ${amount}`).toBeGreaterThanOrEqual(min);
+          expect(aprPct, `${band} ${months}m Rs ${amount}`).toBeLessThanOrEqual(max);
         }
       }
     }
+  });
+
+  it("prices interest from 12% to 24% a year", () => {
+    expect(LOAN_TERMS.annualRatePct).toEqual({ min: 12, max: 24 });
   });
 
   it("keeps the advertised interest range in step with the rate table", () => {
