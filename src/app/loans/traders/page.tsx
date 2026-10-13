@@ -15,7 +15,7 @@ export default function Traders() {
         <li>Your UPI receipts show how many customers pay you and how steady your sales are. That counts in your favour.</li>
         <li>GST filings and Udyam registration help but are not required.</li>
         <li>First loans go up to Rs 50,000. Repay on time and your limit can grow.</li>
-        <li>Repay in equal monthly EMIs over 6, 9 or 12 months, auto-debited from your bank account.</li>
+        <li>Repay in equal monthly EMIs over 6 to 60 months, auto-debited from your bank account.</li>
       </ul>
       <div className="mt-10">
         <ButtonLink href="/eligibility">Check eligibility</ButtonLink>

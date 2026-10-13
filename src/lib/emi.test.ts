@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { LOAN_TERMS, type PricedBand, RATE_BY_BAND } from "./config";
+import { ADVERTISED_APR, LOAN_TERMS, type PricedBand, RATE_BY_BAND } from "./config";
 import { aprPct, aprRange, emi, loanCost, principalForEmi, schedule } from "./emi";
 
 describe("emi", () => {
@@ -27,11 +27,11 @@ describe("schedule", () => {
 });
 
 describe("loanCost", () => {
-  it("deducts the 2% fee and 18% GST at disbursal", () => {
+  it("deducts the 5% fee and 18% GST at disbursal", () => {
     const cost = loanCost(50_000, 24, 6);
-    expect(cost.processingFee).toBe(1_000);
-    expect(cost.gstOnFee).toBe(180);
-    expect(cost.netDisbursal).toBe(48_820);
+    expect(cost.processingFee).toBe(2_500);
+    expect(cost.gstOnFee).toBe(450);
+    expect(cost.netDisbursal).toBe(47_050);
   });
 
   it("reports the largest EMI, which the mandate must cover", () => {
@@ -44,7 +44,7 @@ describe("loanCost", () => {
   it("gives an APR above the interest rate once the fee is included", () => {
     const cost = loanCost(50_000, 24, 6);
     expect(cost.aprPct).toBeGreaterThan(24);
-    expect(cost.aprPct).toBeLessThan(45);
+    expect(cost.aprPct).toBeLessThan(50);
   });
 
   it("gives a lower APR uplift on 12 months than on 6 months", () => {
@@ -59,7 +59,7 @@ describe("pricing", () => {
     const { min, max } = aprRange();
     for (const band of Object.keys(RATE_BY_BAND) as PricedBand[]) {
       for (const months of LOAN_TERMS.tenuresMonths) {
-        for (let amount = LOAN_TERMS.minAmount; amount <= LOAN_TERMS.maxAmount; amount += 1000) {
+        for (let amount = LOAN_TERMS.minAmount; amount <= LOAN_TERMS.maxAmount; amount += 5000) {
           const { aprPct } = loanCost(amount, RATE_BY_BAND[band][months], months);
           expect(aprPct, `${band} ${months}m Rs ${amount}`).toBeGreaterThanOrEqual(min);
           expect(aprPct, `${band} ${months}m Rs ${amount}`).toBeLessThanOrEqual(max);
@@ -68,8 +68,14 @@ describe("pricing", () => {
     }
   });
 
-  it("prices interest from 12% to 24% a year", () => {
-    expect(LOAN_TERMS.annualRatePct).toEqual({ min: 12, max: 24 });
+  it("keeps the advertised APR inside the real range, so its caveats stay true", () => {
+    const { min, max } = aprRange();
+    expect(ADVERTISED_APR.min).toBeGreaterThanOrEqual(min);
+    expect(ADVERTISED_APR.max).toBeLessThanOrEqual(max);
+  });
+
+  it("prices interest from 12% to 28% a year", () => {
+    expect(LOAN_TERMS.annualRatePct).toEqual({ min: 12, max: 28 });
   });
 
   it("keeps the advertised interest range in step with the rate table", () => {

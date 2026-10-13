@@ -4,9 +4,9 @@
 export const LOAN_TERMS = {
   minAmount: 15_000,
   maxAmount: 300_000,
-  tenuresMonths: [6, 9, 12] as const,
-  annualRatePct: { min: 12, max: 24 }, // lowest and highest in RATE_BY_BAND
-  processingFeeRate: 0.02,
+  tenuresMonths: [6, 9, 12, 18, 24, 36, 48, 60] as const,
+  annualRatePct: { min: 12, max: 28 }, // lowest and highest in RATE_BY_BAND
+  processingFeeRate: 0.05, // "up to 5%": the site prices every loan at this maximum
   gstRate: 0.18,
   failedEmiCharge: 250,
 } as const;
@@ -50,16 +50,23 @@ export const SITE = {
   },
 } as const;
 
-// Interest runs from 12% to 24% a year, set by band; the all-in APR is higher because it
+// Interest runs from 12% to 28% a year, set by band; the all-in APR is higher because it
 // includes the processing fee (see aprRange in emi.ts). Rates are indicative until the NBFC
 // partner confirms them. Applicants without a credit score above 700 (the 5% sleeve) are
 // priced as band D.
+const everyTenure = (ratePct: number) =>
+  Object.fromEntries(LOAN_TERMS.tenuresMonths.map((months) => [months, ratePct])) as Record<Tenure, number>;
 export const RATE_BY_BAND = {
-  A: { 6: 12, 9: 12, 12: 12 },
-  B: { 6: 16, 9: 16, 12: 16 },
-  C: { 6: 20, 9: 20, 12: 20 },
-  D: { 6: 24, 9: 24, 12: 24 },
+  A: everyTenure(12),
+  B: everyTenure(17),
+  C: everyTenure(23),
+  D: everyTenure(28),
 } as const satisfies Record<"A" | "B" | "C" | "D", Record<Tenure, number>>;
+
+// The effective APR advertised for most loans. Actual APRs run wider (see aprRange in emi.ts):
+// short or small loans in high bands go above it, long loans in band A fall below it, and the
+// copy says so wherever this range appears.
+export const ADVERTISED_APR = { min: 17, max: 48 } as const;
 
 export type Tenure = (typeof LOAN_TERMS.tenuresMonths)[number];
 export type PricedBand = keyof typeof RATE_BY_BAND;

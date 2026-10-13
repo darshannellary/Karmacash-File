@@ -1,6 +1,6 @@
 import { ButtonLink } from "@/components/ButtonLink";
-import { LOAN_TERMS } from "@/lib/config";
-import { aprRange, formatPct } from "@/lib/emi";
+import { ADVERTISED_APR, LOAN_TERMS } from "@/lib/config";
+import { formatPct } from "@/lib/emi";
 
 const STEPS = [
   {
@@ -18,7 +18,6 @@ const STEPS = [
 ];
 
 export default function Home() {
-  const apr = aprRange();
   return (
     <>
       <section className="bg-tint">
@@ -28,7 +27,7 @@ export default function Home() {
             Small loans for traders and gig workers, judged on how you actually earn.
           </h1>
           <p className="mt-5 max-w-xl text-lg text-muted">
-            Borrow Rs 15,000 to Rs 3,00,000 and repay in equal monthly EMIs over 6, 9 or 12{" "}
+            Borrow Rs 15,000 to Rs 3,00,000 and repay in equal monthly EMIs over 6 to 60{" "}
             months. Your UPI and bank payments count, not just your credit score.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
@@ -58,9 +57,9 @@ export default function Home() {
       <section className="mx-auto grid max-w-5xl gap-6 px-4 sm:grid-cols-3">
         <Fact
           value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}%`}
-          label={`interest a year, indicative until our lending partner confirms. APR with fees about ${apr.min}% to ${apr.max}%.`}
+          label={`interest a year. Effective APR ${ADVERTISED_APR.min}% to ${ADVERTISED_APR.max}% a year, higher for small or short-term loans. Indicative until our lending partner confirms.`}
         />
-        <Fact value={`${formatPct(LOAN_TERMS.processingFeeRate)} + GST`} label="one-time processing fee" />
+        <Fact value={`Up to ${formatPct(LOAN_TERMS.processingFeeRate)} + GST`} label="one-time processing fee" />
         <Fact value="No hidden charges" label="every rupee shown before you sign" />
       </section>
     </>
