@@ -66,7 +66,7 @@ export function EmiCalculator() {
         <Stat term="Monthly EMI" value={formatInr(cost.emi)} strong />
         <Stat term="APR (all-in yearly cost)" value={`${cost.aprPct.toFixed(1)}%`} strong />
         <Stat term="Total interest" value={formatInr(cost.totalInterest)} />
-        <Stat term={`Processing fee (${formatPct(LOAN_TERMS.processingFeeRate)})`} value={formatInr(cost.processingFee)} />
+        <Stat term={`Processing fee (up to ${formatPct(LOAN_TERMS.processingFeeRate)})`} value={formatInr(cost.processingFee)} />
         <Stat term={`GST on fee (${formatPct(LOAN_TERMS.gstRate)})`} value={formatInr(cost.gstOnFee)} />
         <Stat term="Amount you receive" value={formatInr(cost.netDisbursal)} />
         <Stat term="Total you repay" value={formatInr(cost.totalRepayable)} />

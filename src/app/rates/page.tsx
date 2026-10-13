@@ -9,7 +9,7 @@ export const metadata: Metadata = { title: "Rates and charges" };
 export default function Rates() {
   const apr = aprRange();
   const sample = loanCost(50_000, RATE_BY_BAND.D[6], 6);
-  const fee = `${formatPct(LOAN_TERMS.processingFeeRate)} of the loan amount plus ${formatPct(LOAN_TERMS.gstRate)} GST`;
+  const fee = `Up to ${formatPct(LOAN_TERMS.processingFeeRate)} of the loan amount plus ${formatPct(LOAN_TERMS.gstRate)} GST`;
   const kfs: [string, string][] = [
     ["Lender", SITE.lendingPartner],
     ["Loan amount", formatInr(sample.principal)],

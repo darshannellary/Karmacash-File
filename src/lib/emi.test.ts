@@ -27,11 +27,11 @@ describe("schedule", () => {
 });
 
 describe("loanCost", () => {
-  it("deducts the 2% fee and 18% GST at disbursal", () => {
+  it("deducts the 5% fee and 18% GST at disbursal", () => {
     const cost = loanCost(50_000, 24, 6);
-    expect(cost.processingFee).toBe(1_000);
-    expect(cost.gstOnFee).toBe(180);
-    expect(cost.netDisbursal).toBe(48_820);
+    expect(cost.processingFee).toBe(2_500);
+    expect(cost.gstOnFee).toBe(450);
+    expect(cost.netDisbursal).toBe(47_050);
   });
 
   it("reports the largest EMI, which the mandate must cover", () => {
@@ -44,7 +44,7 @@ describe("loanCost", () => {
   it("gives an APR above the interest rate once the fee is included", () => {
     const cost = loanCost(50_000, 24, 6);
     expect(cost.aprPct).toBeGreaterThan(24);
-    expect(cost.aprPct).toBeLessThan(45);
+    expect(cost.aprPct).toBeLessThan(50);
   });
 
   it("gives a lower APR uplift on 12 months than on 6 months", () => {

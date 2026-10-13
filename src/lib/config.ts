@@ -6,7 +6,7 @@ export const LOAN_TERMS = {
   maxAmount: 300_000,
   tenuresMonths: [6, 9, 12] as const,
   annualRatePct: { min: 12, max: 28 }, // lowest and highest in RATE_BY_BAND
-  processingFeeRate: 0.02,
+  processingFeeRate: 0.05, // "up to 5%": the site prices every loan at this maximum
   gstRate: 0.18,
   failedEmiCharge: 250,
 } as const;

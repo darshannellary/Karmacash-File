@@ -60,7 +60,7 @@ export default function Home() {
           value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}%`}
           label={`interest a year, indicative until our lending partner confirms. APR with fees about ${apr.min}% to ${apr.max}%.`}
         />
-        <Fact value={`${formatPct(LOAN_TERMS.processingFeeRate)} + GST`} label="one-time processing fee" />
+        <Fact value={`Up to ${formatPct(LOAN_TERMS.processingFeeRate)} + GST`} label="one-time processing fee" />
         <Fact value="No hidden charges" label="every rupee shown before you sign" />
       </section>
     </>
