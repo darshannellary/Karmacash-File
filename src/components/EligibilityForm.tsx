@@ -79,7 +79,7 @@ export function EligibilityForm() {
           </select>
         </Field>
         <button type="submit" className="w-full rounded-lg bg-action px-5 py-3 font-semibold text-white hover:bg-action-hover">
-          Check eligibility
+          Check Eligibility
         </button>
         <p className="text-xs text-muted">This check does not affect your credit score.</p>
       </form>

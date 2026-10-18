@@ -27,10 +27,10 @@ export function Header() {
         </nav>
         <div className="flex items-center gap-3">
           <Link href="/apply" className="text-sm font-semibold text-action">
-            Sign in
+            Sign In
           </Link>
           <ButtonLink href="/eligibility" size="sm">
-            Check eligibility
+            Check Eligibility
           </ButtonLink>
         </div>
       </div>
