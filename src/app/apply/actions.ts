@@ -1,15 +1,19 @@
 "use server";
 
+import { randomInt } from "node:crypto";
 import { redirect } from "next/navigation";
+import { after } from "next/server";
 import { type ApplicationState, coolingOffEnds, currentStep, isTenure, offerTerms } from "@/lib/application";
-import { LOAN_TERMS, SANDBOX } from "@/lib/config";
+import { LOAN_TERMS, OTP_LIMITS, SANDBOX, SANDBOX_OTP } from "@/lib/config";
+import { type Email, emailConfigured, isValidEmail, sendEmail } from "@/lib/email";
+import { decisionEmail, loanSignedEmail, verificationEmail } from "@/lib/email-templates";
 import { inLaunchRegion, isValidPin, type WorkType } from "@/lib/eligibility";
 import { loanCost } from "@/lib/emi";
 import type { FormState } from "@/lib/form-state";
 import { fetchApplicantData, isDataSetId, namesMatch, pennyDrop, sleeveShareThisMonth, verifyOtp } from "@/lib/sandbox";
 import { allowGuess, allowSend, type OtpScope, recordWrongGuess } from "@/lib/rate-limit";
 import { score } from "@/lib/scorecard";
-import { clearState, readState, writeState } from "@/lib/session";
+import { clearState, hashCode, readState, writeState } from "@/lib/session";
 import { ageOn, isIndividualPan, isValidAccountNumber, isValidIfsc, last4, normalisePhone } from "@/lib/validation";
 
 // Each action re-reads the signed state and checks the borrower is on the step it
@@ -88,6 +92,74 @@ export async function saveDetails(_: FormState, data: FormData): Promise<FormSta
   return undefined;
 }
 
+/** Sends an email code: a real one through Resend if it is set up, else the test code in test mode. */
+async function issueEmailCode(s: ApplicationState, address: string): Promise<FormState> {
+  if (!emailConfigured() && !SANDBOX) return { error: "We can't send email right now. Please try again later." };
+  const allowed = await allowSend(`email:${address}`);
+  if (!allowed.ok) return { error: allowed.error };
+  const codeSentAt = now();
+  const code = emailConfigured() ? String(randomInt(0, 1_000_000)).padStart(6, "0") : SANDBOX_OTP;
+  if (emailConfigured()) {
+    const sent = await sendEmail(verificationEmail(address, code));
+    if (!sent.ok) {
+      console.error("Email code not sent:", sent.error);
+      return { error: "We couldn't send the email. Check the address and try again." };
+    }
+  }
+  await writeState({ ...s, email: { address, codeHash: hashCode(code, codeSentAt), codeSentAt } });
+  return undefined;
+}
+
+export async function sendEmailCode(_: FormState, data: FormData): Promise<FormState> {
+  const s = await stateAt("email");
+  if (!s) return OUT_OF_STEP;
+  const address = text(data, "email").toLowerCase();
+  if (!isValidEmail(address)) return { error: "Enter a valid email address, for example name@gmail.com." };
+  return issueEmailCode(s, address);
+}
+
+export async function resendEmailCode(): Promise<FormState> {
+  const s = await stateAt("emailCode");
+  if (!s?.email) return OUT_OF_STEP;
+  return issueEmailCode(s, s.email.address);
+}
+
+export async function confirmEmailCode(_: FormState, data: FormData): Promise<FormState> {
+  const s = await stateAt("emailCode");
+  if (!s?.email || !s.phone) return OUT_OF_STEP;
+  const { codeSentAt, codeHash } = s.email;
+  if (Date.now() - Date.parse(codeSentAt) > OTP_LIMITS.codeWindowMinutes * 60_000) {
+    return { error: "That code has expired. Send a new code." };
+  }
+  const allowed = await allowGuess("email", s.phone, codeSentAt);
+  if (!allowed.ok) return { error: allowed.error };
+  if (hashCode(text(data, "code"), codeSentAt) !== codeHash) {
+    return { error: await recordWrongGuess("email", s.phone, codeSentAt) };
+  }
+  await writeState({ ...s, email: { ...s.email, verifiedAt: now() } });
+  return undefined;
+}
+
+export async function changeEmail(): Promise<void> {
+  const s = await stateAt("emailCode");
+  if (!s) return;
+  await writeState({ ...s, email: undefined });
+}
+
+/** A verified email carries over when the borrower starts a new application. */
+const verifiedEmail = (s: ApplicationState) => (s.email?.verifiedAt ? s.email : undefined);
+
+/** Emails the borrower after the response is sent, if their address is verified and Resend is set up. */
+function notify(s: ApplicationState, build: (to: string, s: ApplicationState) => Email | null): void {
+  if (!s.email?.verifiedAt || !emailConfigured()) return;
+  const mail = build(s.email.address, s);
+  if (!mail) return;
+  after(async () => {
+    const sent = await sendEmail(mail);
+    if (!sent.ok) console.error("Notification email not sent:", sent.error);
+  });
+}
+
 export async function verifyKyc(_: FormState, data: FormData): Promise<FormState> {
   const s = await stateAt("kyc");
   if (!s?.phone) return OUT_OF_STEP;
@@ -110,7 +182,7 @@ export async function giveConsentAndDecide(_: FormState, data: FormData): Promis
 
   const result = score(fetchApplicantData(dataSet, s.details.age), { sleeveShareThisMonth: sleeveShareThisMonth() });
   const at = now();
-  await writeState({
+  const next: ApplicationState = {
     ...s,
     consent: { bureauAt: at, aaAt: at, wordingVersion: "consent-v1-2026-10" },
     decision: {
@@ -125,7 +197,9 @@ export async function giveConsentAndDecide(_: FormState, data: FormData): Promis
       dataSet,
       decidedAt: at,
     },
-  });
+  };
+  await writeState(next);
+  notify(next, decisionEmail);
   return undefined;
 }
 
@@ -133,7 +207,9 @@ export async function giveConsentAndDecide(_: FormState, data: FormData): Promis
 export async function simulateReviewerApproval(): Promise<void> {
   const s = await stateAt("outcome");
   if (!SANDBOX || !s?.decision || s.decision.decision !== "review") return;
-  await writeState({ ...s, decision: { ...s.decision, decision: "offer" } });
+  const next: ApplicationState = { ...s, decision: { ...s.decision, decision: "offer" } };
+  await writeState(next);
+  notify(next, decisionEmail);
 }
 
 export async function acceptOffer(_: FormState, data: FormData): Promise<FormState> {
@@ -189,7 +265,9 @@ export async function signAgreement(_: FormState, data: FormData): Promise<FormS
   const error = await checkOtp("esign", s.phone, text(data, "otp"));
   if (error) return { error };
   const id = `KC${Date.now().toString(36).toUpperCase()}`;
-  await writeState({ ...s, loan: { id, signedAt: now() } });
+  const next: ApplicationState = { ...s, loan: { id, signedAt: now() } };
+  await writeState(next);
+  notify(next, loanSignedEmail);
   redirect("/account");
 }
 
@@ -197,7 +275,7 @@ export async function signAgreement(_: FormState, data: FormData): Promise<FormS
 export async function exitDuringCoolingOff(): Promise<void> {
   const s = await readState();
   if (!s.loan || new Date() >= coolingOffEnds(s.loan.signedAt)) return;
-  await writeState({ phone: s.phone, otpSentAt: s.otpSentAt, signedInAt: s.signedInAt });
+  await writeState({ phone: s.phone, otpSentAt: s.otpSentAt, signedInAt: s.signedInAt, email: verifiedEmail(s) });
   redirect("/apply");
 }
 
@@ -209,7 +287,7 @@ export async function withdrawAaConsent(): Promise<void> {
 
 export async function startOver(): Promise<void> {
   const s = await readState();
-  await writeState({ phone: s.phone, otpSentAt: s.otpSentAt, signedInAt: s.signedInAt });
+  await writeState({ phone: s.phone, otpSentAt: s.otpSentAt, signedInAt: s.signedInAt, email: verifiedEmail(s) });
 }
 
 export async function signOut(): Promise<void> {

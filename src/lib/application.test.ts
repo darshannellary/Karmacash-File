@@ -14,6 +14,10 @@ describe("currentStep", () => {
     s.signedInAt = at;
     expect(currentStep(s)).toBe("details");
     s.details = { fullName: "A", dob: "1990-01-01", age: 36, panMasked: "XXXXXX234F", pinCode: "682001", workType: "trader" };
+    expect(currentStep(s)).toBe("email");
+    s.email = { address: "a@example.com", codeHash: "h", codeSentAt: at };
+    expect(currentStep(s)).toBe("emailCode");
+    s.email.verifiedAt = at;
     expect(currentStep(s)).toBe("kyc");
     s.kyc = { aadhaarLast4: "1234", verifiedAt: at };
     expect(currentStep(s)).toBe("consent");
