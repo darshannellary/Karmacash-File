@@ -16,6 +16,7 @@ import {
 import { LAUNCH_REGION, SANDBOX, SANDBOX_OTP, SITE } from "@/lib/config";
 import { formatInr, loanCost } from "@/lib/emi";
 import { emailConfigured } from "@/lib/email";
+import { smsConfigured } from "@/lib/sms";
 import { DATA_SETS } from "@/lib/sandbox";
 import { REASON_TEXT } from "@/lib/scorecard";
 import { readState } from "@/lib/session";
@@ -102,7 +103,14 @@ function StepView({ step, s }: { step: Step; s: ApplicationState }) {
     case "otp":
       return (
         <>
-          <Heading title="Enter the code" intro={`We sent a 6-digit code to +91 ${s.phone}.`} />
+          <Heading
+            title="Enter the code"
+            intro={
+              smsConfigured()
+                ? `We sent a 6-digit code by SMS to +91 ${s.phone}. It is valid for 10 minutes.`
+                : `Test mode: no SMS was sent to +91 ${s.phone}. Use ${SANDBOX_OTP}.`
+            }
+          />
           <StepForm action={confirmOtp} submitLabel="Verify">
             <Field label="One-time code" htmlFor="otp">
               <input id="otp" name="otp" inputMode="numeric" autoComplete="one-time-code" maxLength={6} required className={inputClass} />

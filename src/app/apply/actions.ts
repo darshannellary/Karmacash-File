@@ -6,6 +6,7 @@ import { after } from "next/server";
 import { type ApplicationState, coolingOffEnds, currentStep, isTenure, offerTerms } from "@/lib/application";
 import { LOAN_TERMS, OTP_LIMITS, SANDBOX, SANDBOX_OTP } from "@/lib/config";
 import { type Email, emailConfigured, isValidEmail, sendEmail } from "@/lib/email";
+import { sendSmsOtp, smsConfigured, verifySmsOtp } from "@/lib/sms";
 import { decisionEmail, loanSignedEmail, verificationEmail } from "@/lib/email-templates";
 import { inLaunchRegion, isValidPin, type WorkType } from "@/lib/eligibility";
 import { loanCost } from "@/lib/emi";
@@ -33,8 +34,31 @@ const OUT_OF_STEP: FormState = { error: "This step has changed. Please reload th
 async function checkOtp(scope: OtpScope, phone: string, code: string, codeId?: string): Promise<string | null> {
   const allowed = await allowGuess(scope, phone, codeId);
   if (!allowed.ok) return allowed.error;
+  // Sign-in codes come from MSG91 when it is set up; KYC and eSign codes stay with their sandboxes.
+  if (scope === "signin" && smsConfigured()) {
+    const result = await verifySmsOtp(phone, code);
+    if (result.ok) return null;
+    if (result.reason === "expired") return "That code has expired. Send a new code.";
+    if (result.reason === "service") {
+      console.error("MSG91 verify failed:", result.error);
+      return "We couldn't check the code just now. Please try again.";
+    }
+    return recordWrongGuess(scope, phone, codeId);
+  }
   if (verifyOtp(code)) return null;
   return recordWrongGuess(scope, phone, codeId);
+}
+
+/** Sends the sign-in SMS once the limits allow it; returns the error to show, or null. */
+async function deliverSignInCode(phone: string): Promise<string | null> {
+  if (!smsConfigured() && !SANDBOX) return "We can't send SMS codes right now. Please try again later.";
+  const allowed = await allowSend(phone);
+  if (!allowed.ok) return allowed.error;
+  if (!smsConfigured()) return null;
+  const sent = await sendSmsOtp(phone);
+  if (sent.ok) return null;
+  console.error("MSG91 send failed:", sent.error);
+  return "We couldn't send the SMS. Check the number and try again.";
 }
 
 export async function sendOtp(_: FormState, data: FormData): Promise<FormState> {
@@ -43,8 +67,8 @@ export async function sendOtp(_: FormState, data: FormData): Promise<FormState> 
   if (step !== "phone" && step !== "otp") return OUT_OF_STEP;
   const phone = normalisePhone(text(data, "phone"));
   if (!phone) return { error: "Enter a 10-digit Indian mobile number." };
-  const allowed = await allowSend(phone);
-  if (!allowed.ok) return { error: allowed.error };
+  const error = await deliverSignInCode(phone);
+  if (error) return { error };
   await writeState({ phone, otpSentAt: now() });
   return undefined;
 }
@@ -52,8 +76,8 @@ export async function sendOtp(_: FormState, data: FormData): Promise<FormState> 
 export async function resendOtp(): Promise<FormState> {
   const s = await stateAt("otp");
   if (!s?.phone) return OUT_OF_STEP;
-  const allowed = await allowSend(s.phone);
-  if (!allowed.ok) return { error: allowed.error };
+  const error = await deliverSignInCode(s.phone);
+  if (error) return { error };
   // A new otpSentAt identifies a new code, so its wrong-guess count starts again.
   await writeState({ ...s, otpSentAt: now() });
   return undefined;
