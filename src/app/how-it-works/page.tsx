@@ -13,7 +13,7 @@ const STEPS = [
   ["Review and sign", "See the amount, EMI, interest, processing fee and every charge in the Key Fact Statement, then e-sign with Aadhaar."],
   ["Set up AutoPay", "We verify your bank account with a Rs 1 deposit, then set up monthly EMIs by e-NACH or UPI AutoPay."],
   ["Receive the money", "Our lending partner pays directly into your verified bank account."],
-  ["Repay monthly", "Equal EMIs over 6, 9 or 12 months. You can prepay or exit during the cooling-off period."],
+  ["Repay monthly", "Equal EMIs over 6 to 60 months. You can prepay or exit during the cooling-off period."],
 ];
 
 const DATA = [
@@ -49,7 +49,7 @@ export default function HowItWorks() {
         ))}
       </dl>
       <div className="mt-10">
-        <ButtonLink href="/eligibility">Check eligibility</ButtonLink>
+        <ButtonLink href="/eligibility">Check Eligibility</ButtonLink>
       </div>
     </PageShell>
   );

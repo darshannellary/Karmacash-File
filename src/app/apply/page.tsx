@@ -45,12 +45,6 @@ export const metadata: Metadata = { title: "Apply", robots: { index: false } };
 export default function Apply() {
   return (
     <div className="mx-auto max-w-xl px-4 py-10">
-      {SANDBOX && (
-        <p className="mb-6 rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
-          <strong>Test mode.</strong> No real checks run and no money moves. Use {SANDBOX_OTP} for every{" "}
-          {smsConfigured() ? "Aadhaar and eSign" : "phone, Aadhaar and eSign"} OTP.
-        </p>
-      )}
       <Suspense fallback={<p className="text-muted">Loading your application…</p>}>
         <Flow />
       </Suspense>

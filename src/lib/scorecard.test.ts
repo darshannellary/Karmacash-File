@@ -1,4 +1,6 @@
 import { describe, expect, it } from "vitest";
+import { LOAN_TERMS } from "./config";
+import { emi } from "./emi";
 import { type Applicant, averageInflow, band, limitFor, score } from "./scorecard";
 
 const trader: Applicant = {
@@ -66,8 +68,10 @@ describe("main book (score above 700)", () => {
   });
 
   it("keeps EMIs under 35% of inflow after existing EMIs", () => {
-    const limit = limitFor({ ...trader, onTimeKarmacashLoansRepaid: 2, existingMonthlyEmi: 12_000 }, false);
-    expect(limit).toBeLessThan(30_000);
+    const applicant = { ...trader, onTimeKarmacashLoansRepaid: 2, existingMonthlyEmi: 12_000 };
+    const limit = limitFor(applicant, false);
+    const maxEmi = Math.floor(0.35 * averageInflow(trader) - 12_000);
+    expect(emi(limit, LOAN_TERMS.annualRatePct.max, Math.max(...LOAN_TERMS.tenuresMonths))).toBeLessThanOrEqual(maxEmi);
   });
 
   it("reports the new EMI the applicant can afford, net of existing EMIs", () => {
@@ -76,7 +80,8 @@ describe("main book (score above 700)", () => {
   });
 
   it("declines when the affordable amount is below Rs 15,000", () => {
-    const r = score({ ...trader, existingMonthlyEmi: 14_000 }, open);
+    // Rs 300 a month over 60 months at 28% repays about Rs 9,000.
+    const r = score({ ...trader, existingMonthlyEmi: Math.floor(0.35 * averageInflow(trader)) - 300 }, open);
     expect(r.decision).toBe("decline");
     expect(r.reasons[0]).toBe("LIMIT_BELOW_MINIMUM");
   });

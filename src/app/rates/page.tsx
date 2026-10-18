@@ -1,14 +1,15 @@
 import type { Metadata } from "next";
 import { EmiCalculator } from "@/components/EmiCalculator";
 import { PageShell } from "@/components/PageShell";
-import { APR_RANGE, LOAN_TERMS, RATE_BY_BAND, SITE } from "@/lib/config";
-import { formatInr, formatPct, loanCost } from "@/lib/emi";
+import { ADVERTISED_APR, LOAN_TERMS, RATE_BY_BAND, SITE } from "@/lib/config";
+import { aprRange, formatInr, formatPct, loanCost } from "@/lib/emi";
 
 export const metadata: Metadata = { title: "Rates and charges" };
 
 export default function Rates() {
+  const apr = aprRange();
   const sample = loanCost(50_000, RATE_BY_BAND.D[6], 6);
-  const fee = `${formatPct(LOAN_TERMS.processingFeeRate)} of the loan amount plus ${formatPct(LOAN_TERMS.gstRate)} GST`;
+  const fee = `Up to ${formatPct(LOAN_TERMS.processingFeeRate)} of the loan amount plus ${formatPct(LOAN_TERMS.gstRate)} GST`;
   const kfs: [string, string][] = [
     ["Lender", SITE.lendingPartner],
     ["Loan amount", formatInr(sample.principal)],
@@ -29,18 +30,21 @@ export default function Rates() {
   return (
     <PageShell
       title="Rates and charges"
-      intro="Every rupee you pay is shown here and in your Key Fact Statement before you sign. Karmacash itself never charges you anything."
+      intro="Every rupee you pay is shown here and in your Key Fact Statement before you sign. Karmacash itself never charges you anything. Rates are indicative until our lending partner confirms them."
     >
       <table className="w-full text-left">
         <tbody className="divide-y divide-line">
-          <Row label="APR (all-in yearly cost)" value={`${APR_RANGE.min}% to ${APR_RANGE.max}%, including the processing fee`} />
           <Row
             label="Interest rate"
-            value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}% a year, depending on your profile and tenure`}
+            value={`${LOAN_TERMS.annualRatePct.min}% to ${LOAN_TERMS.annualRatePct.max}% a year, reducing balance, depending on your profile`}
+          />
+          <Row
+            label="APR (all-in yearly cost)"
+            value={`${ADVERTISED_APR.min}% to ${ADVERTISED_APR.max}% a year for most loans, including the processing fee. Small or short-term loans cost more, up to about ${apr.max}% for a 6-month loan at the highest rate; 3 to 5 year loans at the lowest rate can be as low as about ${apr.min}%.`}
           />
           <Row label="Processing fee" value={`${fee}, deducted at disbursal`} />
           <Row label="Loan amount" value="Rs 15,000 to Rs 3,00,000" />
-          <Row label="Repayment" value="Equal monthly EMIs over 6, 9 or 12 months, auto-debited" />
+          <Row label="Repayment" value="Equal monthly EMIs over 6 to 60 months (6, 9, 12, 18, 24, 36, 48 or 60), auto-debited" />
           <Row label="Failed EMI auto-debit" value={`${formatInr(LOAN_TERMS.failedEmiCharge)} flat`} />
           <Row label="Prepayment" value="Allowed" />
         </tbody>

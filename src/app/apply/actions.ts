@@ -241,7 +241,7 @@ export async function acceptOffer(_: FormState, data: FormData): Promise<FormSta
   if (!s?.decision) return OUT_OF_STEP;
   const amount = Number(text(data, "amount"));
   const months = Number(text(data, "months"));
-  if (!isTenure(months)) return { error: "Choose 6, 9 or 12 months." };
+  if (!isTenure(months)) return { error: "Choose a tenure from the list." };
   // Applications decided before maxEmi was recorded cannot be checked for affordability.
   if (s.decision.maxEmi === undefined) return { error: "Please start a new application." };
   const term = offerTerms(s.decision).find((t) => t.months === months)!;

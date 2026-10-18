@@ -4,9 +4,9 @@
 export const LOAN_TERMS = {
   minAmount: 15_000,
   maxAmount: 300_000,
-  tenuresMonths: [6, 9, 12] as const,
-  annualRatePct: { min: 9.5, max: 19.25 }, // lowest and highest in RATE_BY_BAND
-  processingFeeRate: 0.02,
+  tenuresMonths: [6, 9, 12, 18, 24, 36, 48, 60] as const,
+  annualRatePct: { min: 12, max: 28 }, // lowest and highest in RATE_BY_BAND
+  processingFeeRate: 0.05, // "up to 5%": the site prices every loan at this maximum
   gstRate: 0.18,
   failedEmiCharge: 250,
 } as const;
@@ -50,18 +50,23 @@ export const SITE = {
   },
 } as const;
 
-// The all-in APR, fee included, stays within 18% to 24%. Each band has an APR ceiling, and
-// its interest rate per tenure is the highest (in 0.25% steps) that keeps the APR under that
-// ceiling for every loan amount; shorter tenures are lower because the fee weighs more.
-// Applicants without a credit score above 700 (the 5% sleeve) are priced as band D.
-export const APR_RANGE = { min: 18, max: 24 } as const;
-export const APR_CEILING_BY_BAND = { A: 18, B: 20, C: 22, D: 24 } as const;
+// Interest runs from 12% to 28% a year, set by band; the all-in APR is higher because it
+// includes the processing fee (see aprRange in emi.ts). Rates are indicative until the NBFC
+// partner confirms them. Applicants without a credit score above 700 (the 5% sleeve) are
+// priced as band D.
+const everyTenure = (ratePct: number) =>
+  Object.fromEntries(LOAN_TERMS.tenuresMonths.map((months) => [months, ratePct])) as Record<Tenure, number>;
 export const RATE_BY_BAND = {
-  A: { 6: 9.5, 9: 12, 12: 13.25 },
-  B: { 6: 11.5, 9: 14, 12: 15.25 },
-  C: { 6: 13.5, 9: 16, 12: 17.25 },
-  D: { 6: 15.5, 9: 18, 12: 19.25 },
-} as const satisfies Record<keyof typeof APR_CEILING_BY_BAND, Record<Tenure, number>>;
+  A: everyTenure(12),
+  B: everyTenure(17),
+  C: everyTenure(23),
+  D: everyTenure(28),
+} as const satisfies Record<"A" | "B" | "C" | "D", Record<Tenure, number>>;
+
+// The effective APR advertised for most loans. Actual APRs run wider (see aprRange in emi.ts):
+// short or small loans in high bands go above it, long loans in band A fall below it, and the
+// copy says so wherever this range appears.
+export const ADVERTISED_APR = { min: 17, max: 48 } as const;
 
 export type Tenure = (typeof LOAN_TERMS.tenuresMonths)[number];
 export type PricedBand = keyof typeof RATE_BY_BAND;

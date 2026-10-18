@@ -74,7 +74,7 @@ export function OfferForm({
       </Field>
       <fieldset>
         <legend className="mb-2 font-semibold">Repay over</legend>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           {terms.map((t) => (
             <label
               key={t.months}
