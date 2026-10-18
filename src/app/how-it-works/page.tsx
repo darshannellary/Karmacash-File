@@ -49,7 +49,7 @@ export default function HowItWorks() {
         ))}
       </dl>
       <div className="mt-10">
-        <ButtonLink href="/eligibility">Check eligibility</ButtonLink>
+        <ButtonLink href="/eligibility">Check Eligibility</ButtonLink>
       </div>
     </PageShell>
   );

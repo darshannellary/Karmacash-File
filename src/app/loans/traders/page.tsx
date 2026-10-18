@@ -18,7 +18,7 @@ export default function Traders() {
         <li>Repay in equal monthly EMIs over 6 to 60 months, auto-debited from your bank account.</li>
       </ul>
       <div className="mt-10">
-        <ButtonLink href="/eligibility">Check eligibility</ButtonLink>
+        <ButtonLink href="/eligibility">Check Eligibility</ButtonLink>
       </div>
     </PageShell>
   );

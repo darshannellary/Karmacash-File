@@ -31,7 +31,7 @@ export default function Home() {
             months. Your UPI and bank payments count, not just your credit score.
           </p>
           <div className="mt-8 flex flex-wrap gap-3">
-            <ButtonLink href="/eligibility">Check eligibility</ButtonLink>
+            <ButtonLink href="/eligibility">Check Eligibility</ButtonLink>
             <ButtonLink href="/rates" variant="secondary">
               See rates and EMIs
             </ButtonLink>
