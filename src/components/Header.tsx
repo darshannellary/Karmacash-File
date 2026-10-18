@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ButtonLink } from "./ButtonLink";
 
 const NAV = [
-  { href: "/how-it-works", label: "How it works" },
-  { href: "/loans/traders", label: "For traders" },
-  { href: "/loans/gig-workers", label: "For gig workers" },
+  { href: "/how-it-works", label: "How It Works" },
+  { href: "/loans/traders", label: "For Traders" },
+  { href: "/loans/gig-workers", label: "For Gig Workers" },
   { href: "/rates", label: "Rates" },
   { href: "/faq", label: "FAQ" },
 ];
